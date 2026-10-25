@@ -8,6 +8,19 @@ import { db } from '@/lib/db';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-api-key',
+};
+
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: CORS_HEADERS,
+  });
+}
+
 function getApiKeyFromHeaders(headers: Headers): string | null {
   const authHeader = headers.get('authorization');
   if (authHeader && authHeader.toLowerCase().startsWith('bearer ')) {
@@ -26,7 +39,7 @@ export async function POST(request: NextRequest) {
     if (!rawKey) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized: Missing API key in Authorization or x-api-key header' },
-        { status: 401 }
+        { status: 401, headers: CORS_HEADERS }
       );
     }
 
@@ -34,7 +47,7 @@ export async function POST(request: NextRequest) {
     if (!keyRecord) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized: Invalid or revoked API key' },
-        { status: 401 }
+        { status: 401, headers: CORS_HEADERS }
       );
     }
 
@@ -42,7 +55,7 @@ export async function POST(request: NextRequest) {
     if (!isDomainAllowed(keyRecord.allowedDomains, origin)) {
       return NextResponse.json(
         { success: false, error: 'Forbidden: Request origin is not permitted by API key domain policy' },
-        { status: 403 }
+        { status: 403, headers: CORS_HEADERS }
       );
     }
 
@@ -54,7 +67,7 @@ export async function POST(request: NextRequest) {
     if (!file) {
       return NextResponse.json(
         { success: false, error: 'Bad Request: "file" form-data field is required' },
-        { status: 400 }
+        { status: 400, headers: CORS_HEADERS }
       );
     }
 
@@ -124,12 +137,12 @@ export async function POST(request: NextRequest) {
         direct_url: asset.directUrl,
         created_at: asset.createdAt.toISOString(),
       },
-      { status: 201 }
+      { status: 201, headers: CORS_HEADERS }
     );
   } catch (error: any) {
     return NextResponse.json(
       { success: false, error: error.message || 'Internal Server Error' },
-      { status: 500 }
+      { status: 500, headers: CORS_HEADERS }
     );
   }
 }

@@ -81,6 +81,7 @@ export async function GET(
           'Content-Type': outputMimeType,
           'Content-Length': outputBuffer.length.toString(),
           'Cache-Control': 'public, max-age=31536000, immutable',
+          'Access-Control-Allow-Origin': '*',
           'X-Content-Type-Options': 'nosniff',
           'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; sandbox",
         },
@@ -100,6 +101,7 @@ export async function GET(
       'Content-Type': asset.mimeType,
       'Cache-Control': 'public, max-age=31536000, immutable',
       'Accept-Ranges': 'bytes',
+      'Access-Control-Allow-Origin': '*',
       'X-Content-Type-Options': 'nosniff',
       'Content-Security-Policy': "default-src 'none'; media-src 'self'; style-src 'unsafe-inline'; sandbox",
     };
