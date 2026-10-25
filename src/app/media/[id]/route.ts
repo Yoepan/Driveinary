@@ -25,8 +25,11 @@ export async function GET(
     const formatParam = searchParams.get('format')?.toLowerCase();
     const qualityParam = searchParams.get('q');
 
-    const width = widthParam ? parseInt(widthParam, 10) : undefined;
-    const height = heightParam ? parseInt(heightParam, 10) : undefined;
+    // Clamp resize parameters to protect against memory allocation DoS attacks
+    const rawWidth = widthParam ? parseInt(widthParam, 10) : undefined;
+    const rawHeight = heightParam ? parseInt(heightParam, 10) : undefined;
+    const width = rawWidth && !isNaN(rawWidth) ? Math.min(4000, Math.max(1, rawWidth)) : undefined;
+    const height = rawHeight && !isNaN(rawHeight) ? Math.min(4000, Math.max(1, rawHeight)) : undefined;
     const quality = qualityParam ? Math.min(100, Math.max(1, parseInt(qualityParam, 10))) : 80;
 
     const stream = await downloadStreamFromDrive(asset.accountId, asset.googleFileId);
@@ -78,6 +81,8 @@ export async function GET(
           'Content-Type': outputMimeType,
           'Content-Length': outputBuffer.length.toString(),
           'Cache-Control': 'public, max-age=31536000, immutable',
+          'X-Content-Type-Options': 'nosniff',
+          'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; sandbox",
         },
       });
     }
@@ -95,6 +100,8 @@ export async function GET(
       'Content-Type': asset.mimeType,
       'Cache-Control': 'public, max-age=31536000, immutable',
       'Accept-Ranges': 'bytes',
+      'X-Content-Type-Options': 'nosniff',
+      'Content-Security-Policy': "default-src 'none'; media-src 'self'; style-src 'unsafe-inline'; sandbox",
     };
     if (asset.sizeBytes) {
       responseHeaders['Content-Length'] = asset.sizeBytes.toString();

@@ -17,7 +17,14 @@ export async function GET(request: NextRequest) {
       where.name = { contains: search };
     }
     if (mimePrefix) {
-      where.mimeType = { startsWith: mimePrefix };
+      if (mimePrefix === 'application/') {
+        where.OR = [
+          { mimeType: { startsWith: 'application/' } },
+          { mimeType: { startsWith: 'text/' } },
+        ];
+      } else {
+        where.mimeType = { startsWith: mimePrefix };
+      }
     }
 
     const [total, items] = await Promise.all([

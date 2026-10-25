@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Readable } from 'stream';
 import sharp from 'sharp';
-import { validateApiKey } from '@/lib/api-key';
+import { validateApiKey, isDomainAllowed } from '@/lib/api-key';
 import { uploadStreamToDrive } from '@/lib/gdrive';
 import { db } from '@/lib/db';
 
@@ -35,6 +35,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized: Invalid or revoked API key' },
         { status: 401 }
+      );
+    }
+
+    const origin = request.headers.get('origin') || request.headers.get('referer');
+    if (!isDomainAllowed(keyRecord.allowedDomains, origin)) {
+      return NextResponse.json(
+        { success: false, error: 'Forbidden: Request origin is not permitted by API key domain policy' },
+        { status: 403 }
       );
     }
 

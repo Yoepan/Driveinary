@@ -38,5 +38,5 @@ export function decrypt(ciphertext: string): string {
   const decipher = crypto.createDecipheriv(ALGORITHM, getKey(), iv);
   decipher.setAuthTag(tag);
 
-  return decipher.update(encryptedText) + decipher.final('utf8');
+  return Buffer.concat([decipher.update(encryptedText), decipher.final()]).toString('utf8');
 }

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { nanoid } from 'nanoid';
-import { validateApiKey } from '@/lib/api-key';
+import { validateApiKey, isDomainAllowed } from '@/lib/api-key';
 import { createResumableUploadSession } from '@/lib/gdrive';
 import { db } from '@/lib/db';
 
@@ -37,6 +37,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const clientOrigin = request.headers.get('origin') || request.headers.get('referer') || undefined;
+    if (!isDomainAllowed(keyRecord.allowedDomains, clientOrigin || null)) {
+      return NextResponse.json(
+        { success: false, error: 'Forbidden: Request origin is not permitted by API key domain policy' },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const { name, mime_type, size, folder } = body;
 
@@ -48,7 +56,6 @@ export async function POST(request: NextRequest) {
     }
 
     const sizeBytes = parseInt(size, 10);
-    const clientOrigin = request.headers.get('origin') || request.headers.get('referer') || undefined;
     const session = await createResumableUploadSession(
       keyRecord.accountId,
       name,

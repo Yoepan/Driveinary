@@ -124,25 +124,28 @@ export async function uploadStreamToDrive(
   let targetParentId = account.rootFolderId;
 
   if (subfolderName) {
-    // Find or create subfolder under the root folder
-    const searchSubfolder = await drive.files.list({
-      q: `name = '${subfolderName}' and '${account.rootFolderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
-      fields: 'files(id, name)',
-      spaces: 'drive',
-    });
-
-    if (searchSubfolder.data.files && searchSubfolder.data.files.length > 0) {
-      targetParentId = searchSubfolder.data.files[0].id!;
-    } else {
-      const createdSubfolder = await drive.files.create({
-        requestBody: {
-          name: subfolderName,
-          mimeType: 'application/vnd.google-apps.folder',
-          parents: [account.rootFolderId],
-        },
-        fields: 'id',
+    const cleanSubfolder = subfolderName.replace(/['\\]/g, '').trim();
+    if (cleanSubfolder) {
+      // Find or create subfolder under the root folder
+      const searchSubfolder = await drive.files.list({
+        q: `name = '${cleanSubfolder}' and '${account.rootFolderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
+        fields: 'files(id, name)',
+        spaces: 'drive',
       });
-      targetParentId = createdSubfolder.data.id!;
+
+      if (searchSubfolder.data.files && searchSubfolder.data.files.length > 0) {
+        targetParentId = searchSubfolder.data.files[0].id!;
+      } else {
+        const createdSubfolder = await drive.files.create({
+          requestBody: {
+            name: cleanSubfolder,
+            mimeType: 'application/vnd.google-apps.folder',
+            parents: [account.rootFolderId],
+          },
+          fields: 'id',
+        });
+        targetParentId = createdSubfolder.data.id!;
+      }
     }
   }
 
@@ -215,24 +218,27 @@ export async function createResumableUploadSession(
   let targetParentId = account.rootFolderId;
 
   if (subfolderName) {
-    const searchSubfolder = await drive.files.list({
-      q: `name = '${subfolderName}' and '${account.rootFolderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
-      fields: 'files(id, name)',
-      spaces: 'drive',
-    });
-
-    if (searchSubfolder.data.files && searchSubfolder.data.files.length > 0) {
-      targetParentId = searchSubfolder.data.files[0].id!;
-    } else {
-      const createdSubfolder = await drive.files.create({
-        requestBody: {
-          name: subfolderName,
-          mimeType: 'application/vnd.google-apps.folder',
-          parents: [account.rootFolderId],
-        },
-        fields: 'id',
+    const cleanSubfolder = subfolderName.replace(/['\\]/g, '').trim();
+    if (cleanSubfolder) {
+      const searchSubfolder = await drive.files.list({
+        q: `name = '${cleanSubfolder}' and '${account.rootFolderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
+        fields: 'files(id, name)',
+        spaces: 'drive',
       });
-      targetParentId = createdSubfolder.data.id!;
+
+      if (searchSubfolder.data.files && searchSubfolder.data.files.length > 0) {
+        targetParentId = searchSubfolder.data.files[0].id!;
+      } else {
+        const createdSubfolder = await drive.files.create({
+          requestBody: {
+            name: cleanSubfolder,
+            mimeType: 'application/vnd.google-apps.folder',
+            parents: [account.rootFolderId],
+          },
+          fields: 'id',
+        });
+        targetParentId = createdSubfolder.data.id!;
+      }
     }
   }
 

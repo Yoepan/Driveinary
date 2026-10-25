@@ -62,3 +62,28 @@ export async function validateApiKey(rawKey: string) {
 
   return apiKey;
 }
+
+export function isDomainAllowed(allowedDomains: string | null, originOrReferer: string | null): boolean {
+  if (!allowedDomains || !allowedDomains.trim()) {
+    return true; // No whitelist restriction
+  }
+  if (!originOrReferer) {
+    return false; // Whitelist configured, but request has no origin/referer
+  }
+
+  let requestHost = originOrReferer;
+  try {
+    const url = new URL(originOrReferer);
+    requestHost = url.hostname;
+  } catch {}
+
+  const domains = allowedDomains
+    .split(',')
+    .map((d) => d.trim().toLowerCase())
+    .filter(Boolean);
+
+  const normalizedHost = requestHost.toLowerCase();
+  return domains.some((allowed) => {
+    return normalizedHost === allowed || normalizedHost.endsWith(`.${allowed}`);
+  });
+}
