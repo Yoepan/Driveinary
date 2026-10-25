@@ -68,8 +68,8 @@ You need a free Google Client ID and Secret so Driveinary can talk to your Googl
 
 ```bash
 # 1. Clone this repository
-git clone https://github.com/your-username/driveinary.git
-cd driveinary
+git clone https://github.com/Yoepan/Driveinary.git
+cd Driveinary
 
 # 2. Copy the environment file
 cp .env.example .env
