@@ -1,0 +1,91 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model GoogleAccount {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  refreshToken String    @map("refresh_token")
+  rootFolderId String    @map("root_folder_id")
+  storageUsed  BigInt    @default(0) @map("storage_used")
+  storageLimit BigInt    @default(5497558138880) @map("storage_limit") // 5 TB in bytes
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  apiKeys      ApiKey[]
+  folders      Folder[]
+  assets       Asset[]
+
+  @@map("google_accounts")
+}
+
+model ApiKey {
+  id             String         @id @default(uuid())
+  accountId      String         @map("account_id")
+  name           String
+  keyPrefix      String         @map("key_prefix")
+  keyHash        String         @unique @map("key_hash")
+  encryptedKey   String?        @map("encrypted_key")
+  allowedDomains String?        @map("allowed_domains")
+  lastUsedAt     DateTime?      @map("last_used_at")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+
+  account        GoogleAccount  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  assets         Asset[]
+
+  @@index([accountId])
+  @@map("api_keys")
+}
+
+model Folder {
+  id             String         @id @default(uuid())
+  accountId      String         @map("account_id")
+  parentId       String?        @map("parent_id")
+  name           String
+  googleFolderId String?        @map("google_folder_id")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+
+  account        GoogleAccount  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  parent         Folder?        @relation("FolderToFolder", fields: [parentId], references: [id], onDelete: Cascade)
+  children       Folder[]       @relation("FolderToFolder")
+  assets         Asset[]
+
+  @@index([accountId])
+  @@index([parentId])
+  @@map("folders")
+}
+
+model Asset {
+  id             String         @id @default(uuid())
+  accountId      String         @map("account_id")
+  createdByKeyId String?        @map("created_by_key_id")
+  folderId       String?        @map("folder_id")
+  name           String
+  googleFileId   String         @unique @map("google_file_id")
+  mimeType       String         @map("mime_type")
+  sizeBytes      Int            @map("size_bytes")
+  width          Int?
+  height         Int?
+  durationSec    Float?         @map("duration_sec")
+  directUrl      String?        @map("direct_url")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+
+  account        GoogleAccount  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  apiKey         ApiKey?        @relation(fields: [createdByKeyId], references: [id], onDelete: SetNull)
+  folder         Folder?        @relation(fields: [folderId], references: [id], onDelete: SetNull)
+
+  @@index([accountId])
+  @@index([createdByKeyId])
+  @@index([folderId])
+  @@index([mimeType])
+  @@index([createdAt])
+  @@map("assets")
+}
