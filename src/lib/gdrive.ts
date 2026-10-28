@@ -5,7 +5,7 @@ import { decrypt, encrypt } from './encryption';
 
 const ROOT_FOLDER_NAME = 'Driveinary_Media';
 const SCOPES = [
-  'https://www.googleapis.com/auth/drive',
+  'https://www.googleapis.com/auth/drive.file',
   'https://www.googleapis.com/auth/userinfo.email',
 ];
 
